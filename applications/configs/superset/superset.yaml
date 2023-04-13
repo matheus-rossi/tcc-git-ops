@@ -1,0 +1,40 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: superset
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: ${REPO_URL}
+    targetRevision: ${REPO_BRANCH}
+    path: ${REPO_PATH}
+    directory:
+      recursive: true
+    helm:
+      passCredentials: true
+      chart: superset
+      parameters:
+      - name: image.tag
+        value: 2.0.1
+      - name: postgresql.enabled
+        value: 'false'
+      - name: supersetNode.connections.db_host
+        value: 'postgresql.postgresql.svc'
+      - name: supersetNode.connections.db_port
+        value: '5432'
+      - name: supersetNode.connections.db_user
+        value: 'postgres'
+      - name: supersetNode.connections.db_pass
+        value: postgres
+      - name: supersetNode.connections.db_name
+        value: superset
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: superset
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true

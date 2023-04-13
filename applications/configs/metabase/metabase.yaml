@@ -1,0 +1,38 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: metabase
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: ${REPO_URL}
+    targetRevision: ${REPO_BRANCH}
+    path: ${REPO_PATH}
+    directory:
+      recursive: true
+    helm:
+      passCredentials: true
+      chart: metabase
+      parameters:
+      - name: database.type
+        value: postgres
+      - name: database.host
+        value: 'postgresql.postgresql.svc'
+      - name: database.port
+        value: '5432'
+      - name: database.dbname
+        value: metabase
+      - name: database.username
+        value: postgres
+      - name: database.password
+        value: postgres
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: metabase
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true

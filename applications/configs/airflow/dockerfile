@@ -1,0 +1,10 @@
+FROM --platform=linux/amd64 apache/airflow:2.5.0-python3.10
+
+# install your pip packages
+RUN pip install --no-cache-dir \
+    'apache-airflow-providers-amazon' \
+    'acryl-datahub-airflow-plugin' \
+    'apache-airflow[statsd]' \
+    'psycopg[binary]' \
+    'pyyaml' \
+    'httpx'

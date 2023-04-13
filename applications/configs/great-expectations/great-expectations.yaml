@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: great-expectations
+spec:
+  selector:
+    matchLabels:
+      app: great-expectations
+  template:
+    metadata:
+      labels:
+        app: great-expectations
+    spec:
+      containers:
+      - name: great-expectations
+        image: theuzz1/gx:v2
+        resources:
+          limits:
+            memory: "4096Mi"
+            cpu: "2000m"
+        ports:
+        - containerPort: 8888

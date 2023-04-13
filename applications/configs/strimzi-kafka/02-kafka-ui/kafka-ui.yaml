@@ -1,0 +1,35 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kafka-ui
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: ${REPO_URL}
+    targetRevision: ${REPO_BRANCH}
+    path: ${REPO_PATH}
+    directory:
+      recursive: true
+    helm:
+      passCredentials: true
+      chart: kafka-ui
+      parameters:
+      - name: service.port
+        value: '8007'
+      - name: image.tag
+        value: v0.6.0
+      # Manually set inside values, since argo cant pass param to the file ...
+      #- name: yamlApplicationConfigConfigMap
+      #  value: |
+      #    name: kafka-ui-clusters
+      #    keyName: kafka-cluster-v10-kafka-bootstrap.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: strimzi
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true

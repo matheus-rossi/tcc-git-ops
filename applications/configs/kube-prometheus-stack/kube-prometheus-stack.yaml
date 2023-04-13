@@ -1,0 +1,32 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: monitoring
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: ${REPO_URL}
+    targetRevision: ${REPO_BRANCH}
+    path: ${REPO_PATH}
+    directory:
+      recursive: true
+    helm:
+      passCredentials: true
+      chart: kube-prometheus-monitoring
+      parameters:
+      - name: prometheus.prometheusSpec.additionalScrapeConfigs
+        value: |
+          - job_name: airflow
+            static_configs:
+              - targets: 
+                - airflow-statsd.airflow.svc:9102
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true

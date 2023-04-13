@@ -1,0 +1,34 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: spark-operator
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: ${REPO_URL}
+    targetRevision: ${REPO_BRANCH}
+    path: ${REPO_PATH}
+    directory:
+      recursive: true
+    helm:
+      passCredentials: true
+      chart: spark-operator
+      parameters:
+        - name: podMonitor.enable
+          value: 'true'
+        - name: webhook.enable
+          value: 'true'
+        - name: serviceAccounts.spark.name
+          value: 'spark-operator'
+        - name: serviceAccounts.sparkoperator.name
+          value: 'spark-operator-spark'
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: spark-operator
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true

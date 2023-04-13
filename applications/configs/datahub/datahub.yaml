@@ -1,0 +1,107 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: datahub
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: ${REPO_URL}
+    targetRevision: ${REPO_BRANCH}
+    path: ${REPO_PATH}
+    directory:
+      recursive: true
+    helm:
+      passCredentials: true
+      chart: datahub
+      parameters:
+      # Versions Config
+      - name: datahub-gms.image.tag
+        value: v0.10.0
+      - name: datahub-frontend.image.tag
+        value: v0.10.0
+      - name: acryl-datahub-actions.image.tag
+        value: v0.0.11
+      - name: datahub-mae-consumer.image.tag
+        value: v0.10.0
+      - name: datahub-mce-consumer.image.tag
+        value: v0.10.0
+      - name: datahub-ingestion-cron.image.tag
+        value: v0.10.0
+      - name: elasticsearchSetupJob.image.tag
+        value: v0.10.0
+      - name: kafkaSetupJob.image.tag
+        value: v0.10.0
+      - name: mysqlSetupJob.image.tag
+        value: v0.10.0
+      - name: postgresqlSetupJob.image.tag
+        value: v0.10.0
+      - name: datahubUpgrade.image.tag
+        value: v0.10.0
+      # Kafka Config
+      - name: global.kafka.bootstrap.server
+        value: datahub-backend-kafka:9092
+      - name: global.kafka.zookeeper.server
+        value: datahub-backend-zookeeper:2181
+      - name: global.kafka.schemaregistry.url
+        value: http://datahub-backend-cp-schema-registry:8081
+      # Datasource Config
+      - name: mysqlSetupJob.enabled
+        value: 'false'
+      - name: global.sql.datasource.host
+        value: postgresql.postgresql.svc:5432
+      - name: global.sql.datasource.hostForpostgresqlClient
+        value: postgresql.postgresql.svc
+      - name: global.sql.datasource.port
+        value: '5432'
+      - name: global.sql.datasource.url
+        value: jdbc:postgresql://postgresql.postgresql.svc/datahub
+      - name: global.sql.datasource.driver
+        value: org.postgresql.Driver
+      - name: global.sql.datasource.username
+        value: postgres
+      - name: global.sql.datasource.password.secretRef
+        value: postgresql-secrets
+      - name: global.sql.datasource.password.secretKey
+        value: postgres-password
+      # Neo4j Config
+      - name: global.neo4j.host
+        value: datahub-backend-neo4j-community:7474
+      - name: global.neo4j.uri
+        value: bolt://datahub-backend-neo4j-community
+      # Ingestion Config
+      - name: datahub-ingestion-cron.enabled
+        value: 'true'
+      # Ingestion Postgres Config
+      - name: datahub-ingestion-cron.crons.postgres.schedule
+        value: '0 * * * *'
+      - name: datahub-ingestion-cron.crons.postgres.recipe.configmapName
+        value: recipes
+      - name: datahub-ingestion-cron.crons.postgres.recipe.fileName
+        value: postgres.yaml
+      # Ingestion Metabase Config
+      - name: datahub-ingestion-cron.crons.metabase.schedule
+        value: '0 * * * *'
+      - name: datahub-ingestion-cron.crons.metabase.recipe.configmapName
+        value: recipes
+      - name: datahub-ingestion-cron.crons.metabase.recipe.fileName
+        value: metabase.yaml
+      # Ingestion SuperSet Config
+      - name: datahub-ingestion-cron.crons.superset.schedule
+        value: '0 * * * *'
+      - name: datahub-ingestion-cron.crons.superset.recipe.configmapName
+        value: recipes
+      - name: datahub-ingestion-cron.crons.superset.recipe.fileName
+        value: superset.yaml
+      # Manual Configs
+      # 1 - charts/datahub-frontend/values.yaml
+      # 1 - service.type = ClusterIP
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: datahub
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+    syncOptions:
+    - CreateNamespace=true

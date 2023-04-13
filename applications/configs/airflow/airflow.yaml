@@ -1,0 +1,50 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: airflow
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: ${REPO_URL}
+    targetRevision: ${REPO_BRANCH}
+    path: ${REPO_PATH}
+    directory:
+      recursive: true
+    helm:
+      passCredentials: true
+      chart: airflow
+      parameters:
+      - name: defaultAirflowTag
+        value: '2.5.0'
+      - name: airflowVersion
+        value: '2.5.0'
+      - name: executor
+        value: KubernetesExecutor
+      - name: createUserJob.useHelmHooks
+        value: "false"
+      - name: migrateDatabaseJob.useHelmHooks
+        value: "false"
+      - name: images.airflow.repository
+        value: theuzz1/airflow250-py310
+      - name: images.airflow.tag
+        value: latest
+      - name: fernetKey
+        value: lGR12hIFEj0OMEJddm6TkH97V11IQ1kJ1I2DgiMofUc=
+      - name: webserverSecretKey
+        value: lGR12hIFEj0OMEJddm6TkH97V11IQ1kJ1I2DgiMofUc=
+      - name: dags.gitSync.repo
+        value: git@github.com:DeiraTool/pipeline
+      - name: dags.gitSync.branch
+        value: main
+      - name: dags.gitSync.subPath
+        value: src/airflow
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: airflow
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true

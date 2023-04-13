@@ -1,0 +1,41 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: postgresql
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: ${REPO_URL}
+    targetRevision: ${REPO_BRANCH}
+    path: ${REPO_PATH}
+    directory:
+      recursive: true
+    helm:
+      passCredentials: true
+      chart: postgresql
+      parameters:
+      - name: global.postgresql.auth.postgresPassword
+        value: postgres
+      - name: initdbScripts."init\.sql"
+        value: "CREATE DATABASE IF NOT EXISTS metabase;"
+      - name: primary.initdb.user
+        value: postgres
+      - name: primary.initdb.password
+        value: postgres
+      # applications/charts/postgresql/values.yaml
+      # - name: primary.initdb.scripts (Put Directly in values)
+      #   value: |
+      #     CREATE DATABASE superset;
+      #     GRANT ALL PRIVILEGES ON DATABASE superset TO postgres;
+      #     CREATE DATABASE metabase;
+      #     GRANT ALL PRIVILEGES ON DATABASE metabase TO postgres;
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: postgresql
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
